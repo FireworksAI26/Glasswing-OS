@@ -23,3 +23,5 @@ chmod 0600 /home/glasswing/.vnc/passwd
 printf 'glasswing:%s\n' "$VNC_PASSWORD" | chpasswd
 
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/glasswing.conf
+
+# build trigger: 2026-06-25T05:40:11Z
