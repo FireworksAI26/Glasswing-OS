@@ -46,6 +46,7 @@ RUN apt-get update \
     && printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' > /etc/apt/preferences.d/mozilla \
     && apt-get update \
     && apt-get install -y --no-install-recommends firefox \
+    && (userdel -r ubuntu 2>/dev/null || true) \
     && useradd --create-home --shell /bin/bash --uid 1000 glasswing \
     && usermod -aG audio,video,ssl-cert glasswing \
     && install -d -o glasswing -g glasswing -m 0700 /tmp/runtime-glasswing \
