@@ -1,0 +1,12 @@
+services:
+  glasswing:
+    build: .
+    image: glasswing:latest
+    ports:
+      - "8080:8080"
+      - "3389:3389"
+    environment:
+      VNC_PASSWORD: "change-me-now"
+      WIDTH: "1600"
+      HEIGHT: "1000"
+      DEPTH: "24"
