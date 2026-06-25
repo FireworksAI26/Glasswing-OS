@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Glasswing OS</title>
+  <style>
+    :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at 20% 10%, #75e6ff 0, transparent 28%), radial-gradient(circle at 80% 20%, #b69cff 0, transparent 24%), linear-gradient(135deg, #0f172a, #1e293b 50%, #111827); color: #f8fafc; }
+    main { width: min(92vw, 760px); padding: 42px; border: 1px solid rgba(255,255,255,.18); border-radius: 32px; background: rgba(15, 23, 42, .72); box-shadow: 0 24px 80px rgba(0,0,0,.42); backdrop-filter: blur(22px); }
+    h1 { margin: 0 0 12px; font-size: clamp(2.4rem, 9vw, 5rem); letter-spacing: -0.07em; line-height: .95; }
+    p { font-size: 1.1rem; line-height: 1.65; color: #dbeafe; }
+    .button { display: inline-flex; align-items: center; justify-content: center; margin-top: 18px; padding: 16px 22px; border-radius: 999px; background: #f8fafc; color: #0f172a; font-weight: 800; text-decoration: none; box-shadow: 0 12px 28px rgba(255,255,255,.18); }
+    .hint { margin-top: 22px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.08); color: #bfdbfe; font-size: .98rem; }
+    code { color: #ffffff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Glasswing OS</h1>
+    <p>A polished Ubuntu 24.04 + KDE Plasma desktop tuned for Windows and macOS switchers, streamed securely through noVNC.</p>
+    <a class="button" href="/vnc.html?host=&port=&autoconnect=true&resize=remote">Open Desktop</a>
+    <div class="hint">When prompted, enter the <code>VNC_PASSWORD</code> you supplied when starting the container. On iPhone, rotate to landscape and use Safari's full-screen mode for the best dock and window experience.</div>
+  </main>
+</body>
+</html>
