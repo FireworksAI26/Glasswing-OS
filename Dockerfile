@@ -61,7 +61,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/glasswing.conf
 COPY start.sh /usr/local/bin/start.sh
 
 RUN chmod +x /usr/local/bin/start.sh \
-    && chown -R glasswing:glasswing /home/glasswing /opt/glasswing /tmp/runtime-glasswing \
+    && chown -R glasswing:glasswing /home/glasswing /opt/glasswing \
     && install -d -o glasswing -g glasswing -m 0755 \
         /home/glasswing/.config \
         /home/glasswing/.local/share/wallpapers/glasswing \
