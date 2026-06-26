@@ -126,6 +126,33 @@ RUN set -eux; \
     rm -f /tmp/d2d.zip; \
     rm -rf /var/lib/apt/lists/*
 
+# --- Make the dock load + stay visible via COMPILED gschema DEFAULTS --------
+# Runtime gsettings/dconf writes from the autostart applier are timing- and
+# dconf-socket-fragile. Baking these as the *default* values means gnome-shell
+# enables dash-to-dock at session startup and the dock renders fixed/visible
+# with zero runtime dependency. We install the extension's own schema into the
+# global schema dir so the override below can compile against it.
+RUN set -eux; \
+    D2D="/usr/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com"; \
+    cp "$D2D/schemas/org.gnome.shell.extensions.dash-to-dock.gschema.xml" \
+       /usr/share/glib-2.0/schemas/; \
+    printf '%s\n' \
+        '[org.gnome.shell]' \
+        "enabled-extensions=['dash-to-dock@micxgx.gmail.com']" \
+        "favorite-apps=['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop']" \
+        'disable-user-extensions=false' \
+        'disable-extension-version-validation=true' \
+        '' \
+        '[org.gnome.shell.extensions.dash-to-dock]' \
+        'dock-fixed=true' \
+        'intellihide=false' \
+        'autohide=false' \
+        "dock-position='BOTTOM'" \
+        'show-show-apps-button=true' \
+        'extend-height=false' \
+        > /usr/share/glib-2.0/schemas/zz-zorin-dock.gschema.override; \
+    glib-compile-schemas /usr/share/glib-2.0/schemas/
+
 # --- User, novnc web assets -------------------------------------------------
 RUN (userdel -r ubuntu 2>/dev/null || true) \
     && useradd --create-home --shell /bin/bash --uid 1000 zorin \
