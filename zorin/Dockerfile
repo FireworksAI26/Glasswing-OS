@@ -81,7 +81,8 @@ RUN printf '%s\n' \
         'export CLUTTER_BACKEND=x11' \
         'export GSK_RENDERER=cairo' \
         'unset WAYLAND_DISPLAY' \
-        'exec dbus-launch --exit-with-session gnome-session --session=gnome' \
+        'echo "[zorin-session] launching gnome-session at $(date)" | tee /tmp/gnome-session.log' \
+        'dbus-launch --exit-with-session gnome-session --session=gnome 2>&1 | tee -a /tmp/gnome-session.log' \
         > /usr/local/bin/zorin-session.sh \
     && printf '%s\n' \
         '#!/usr/bin/env bash' \
