@@ -52,7 +52,6 @@ RUN apt-get update \
     && install -d -o glasswing -g glasswing -m 0700 /tmp/runtime-glasswing \
     && install -d -o glasswing -g glasswing -m 0755 /opt/glasswing /opt/glasswing/www \
     && cp -a /usr/share/novnc/. /opt/glasswing/www/ \
-    && apt-get purge -y gnupg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
