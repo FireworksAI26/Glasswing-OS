@@ -77,18 +77,21 @@ RUN set -e \
         > "$FFDIR/defaults/pref/autoconfig.js" \
     && printf '%s\n' \
         '// Zorin headless Firefox config (first line is ignored by Firefox)' \
-        'defaultPref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);' \
-        'defaultPref("datareporting.policy.dataSubmissionEnabled", false);' \
-        'defaultPref("browser.aboutwelcome.enabled", false);' \
-        'defaultPref("trailhead.firstrun.didSeeAboutWelcome", true);' \
-        'defaultPref("termsofuse.acceptedVersion", 999);' \
-        'defaultPref("termsofuse.acceptedDate", 1);' \
-        'defaultPref("termsofuse.bypassNotification", true);' \
-        'defaultPref("browser.shell.checkDefaultBrowser", false);' \
-        'defaultPref("browser.startup.homepage_override.mstone", "ignore");' \
-        'defaultPref("startup.homepage_welcome_url", "");' \
-        'defaultPref("startup.homepage_welcome_url.additional", "");' \
-        'defaultPref("browser.startup.firstrunSkipsHomepage", true);' \
+        '// Wrap every pref so a single type mismatch never aborts the cfg' \
+        '// (a thrown error makes Firefox pop the "AutoConfig failed" alert).' \
+        'function P(k, v) { try { defaultPref(k, v); } catch (e) {} }' \
+        'P("datareporting.policy.dataSubmissionPolicyBypassNotification", true);' \
+        'P("datareporting.policy.dataSubmissionEnabled", false);' \
+        'P("browser.aboutwelcome.enabled", false);' \
+        'P("trailhead.firstrun.didSeeAboutWelcome", true);' \
+        'P("termsofuse.acceptedVersion", 999);' \
+        'P("termsofuse.acceptedDate", "1");' \
+        'P("termsofuse.bypassNotification", true);' \
+        'P("browser.shell.checkDefaultBrowser", false);' \
+        'P("browser.startup.homepage_override.mstone", "ignore");' \
+        'P("startup.homepage_welcome_url", "");' \
+        'P("startup.homepage_welcome_url.additional", "");' \
+        'P("browser.startup.firstrunSkipsHomepage", true);' \
         > "$FFDIR/firefox.cfg"
 
 # --- Zorin OS look: themes, icons, wallpapers, appearance app (best-effort) -
@@ -188,7 +191,14 @@ RUN printf '%s\n' \
         '# pin apps + ensure an always-visible taskbar (dash-to-panel)' \
         'FAV='\''["firefox.desktop", "org.gnome.Nautilus.desktop", "org.gnome.Terminal.desktop"]'\''' \
         'gsettings set org.gnome.shell favorite-apps "$FAV" 2>/dev/null || true' \
-        'gnome-extensions enable dash-to-panel@jderose9.github.com 2>/dev/null || true' \
+        'DTP="dash-to-panel@jderose9.github.com"' \
+        '# GNOME 46 rejects the noble-packaged extension on version mismatch unless' \
+        '# validation is disabled; also seed enabled-extensions so the shell loads it.' \
+        'gsettings set org.gnome.shell disable-extension-version-validation true 2>/dev/null || true' \
+        'gsettings set org.gnome.shell disable-user-extensions false 2>/dev/null || true' \
+        'CUR=$(gsettings get org.gnome.shell enabled-extensions 2>/dev/null)' \
+        'case "$CUR" in *"$DTP"*) : ;; *) gsettings set org.gnome.shell enabled-extensions "['\''$DTP'\'']" 2>/dev/null || true ;; esac' \
+        'gnome-extensions enable "$DTP" 2>/dev/null || true' \
         >> /usr/local/bin/zorin-apply-theme.sh
 
 COPY index.html /opt/zorin/www/index.html
