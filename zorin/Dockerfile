@@ -67,6 +67,21 @@ RUN (userdel -r ubuntu 2>/dev/null || true) \
     && install -d -o zorin -g zorin -m 0755 /opt/zorin /opt/zorin/www \
     && cp -a /usr/share/novnc/. /opt/zorin/www/
 
+# --- Custom GNOME session: only org.gnome.Shell is *required* ---------------
+# In a headless container there is no logind (org.freedesktop.login1), so the
+# default session's required component org.gnome.SettingsDaemon.Power (gsd-power)
+# exits 1 and "respawns too quickly", which makes gnome-session abort the whole
+# session and show the "Oh no! Something has gone wrong." fail-whale -- even
+# though gnome-shell itself starts fine. We define a session where the only
+# required component is the Shell, so logind-dependent gsd-* helpers failing is
+# non-fatal and the desktop renders.
+RUN install -d -m 0755 /usr/share/gnome-session/sessions \
+    && printf '%s\n' \
+        '[GNOME Session]' \
+        'Name=Zorin Session' \
+        'RequiredComponents=org.gnome.Shell;' \
+        > /usr/share/gnome-session/sessions/zorin.session
+
 # --- Session wrapper + theme applier + autostart + xsession -----------------
 RUN printf '%s\n' \
         '#!/usr/bin/env bash' \
@@ -85,7 +100,7 @@ RUN printf '%s\n' \
         'echo "[diag] user=$(id -un) uid=$(id -u)" | tee -a /tmp/gnome-session.log' \
         'ls -la /run/systemd 2>&1 | sed "s/^/[diag] run-systemd: /" | tee -a /tmp/gnome-session.log' \
         'if [ -e /run/systemd/seats ]; then echo "[diag] /run/systemd/seats EXISTS -> gnome-shell WILL use systemd login path" | tee -a /tmp/gnome-session.log; else echo "[diag] /run/systemd/seats MISSING -> gnome-shell will use dummy login (good)" | tee -a /tmp/gnome-session.log; fi' \
-        'dbus-launch --exit-with-session gnome-session --session=gnome 2>&1 | tee -a /tmp/gnome-session.log' \
+        'dbus-launch --exit-with-session gnome-session --session=zorin 2>&1 | tee -a /tmp/gnome-session.log' \
         > /usr/local/bin/zorin-session.sh \
     && printf '%s\n' \
         '#!/usr/bin/env bash' \
