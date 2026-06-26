@@ -21,9 +21,11 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg software-properties-common locales \
-        dbus dbus-x11 supervisor sudo xauth \
-        xvfb x11vnc xrdp xorgxrdp websockify novnc \
+        dbus dbus-x11 supervisor sudo xauth xfonts-base x11-utils \
+        tigervnc-standalone-server tigervnc-common xrdp \
+        websockify novnc \
         libgl1 libgl1-mesa-dri libglx-mesa0 mesa-utils \
+        libegl1 libgles2 libglu1-mesa \
         gnome-session gnome-shell gnome-shell-extensions \
         gnome-shell-extension-manager \
         gnome-control-center gnome-terminal nautilus gnome-tweaks \
@@ -74,8 +76,12 @@ RUN printf '%s\n' \
         'export LIBGL_ALWAYS_SOFTWARE=1' \
         'export GALLIUM_DRIVER=llvmpipe' \
         'export NO_AT_BRIDGE=1' \
-        'export MUTTER_DEBUG_DUMMY_MODE_SPECS="${WIDTH:-1600}x${HEIGHT:-1000}"' \
-        'exec dbus-launch --exit-with-session gnome-session' \
+        'export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe' \
+        'export MESA_GL_VERSION_OVERRIDE=3.3' \
+        'export CLUTTER_BACKEND=x11' \
+        'export GSK_RENDERER=cairo' \
+        'unset WAYLAND_DISPLAY' \
+        'exec dbus-launch --exit-with-session gnome-session --session=gnome' \
         > /usr/local/bin/zorin-session.sh \
     && printf '%s\n' \
         '#!/usr/bin/env bash' \
@@ -111,6 +117,7 @@ RUN printf '%s\n' \
 
 COPY index.html /opt/zorin/www/index.html
 COPY supervisord.conf /etc/supervisor/conf.d/zorin.conf
+COPY xrdp.ini /etc/xrdp/xrdp.ini
 COPY start.sh /usr/local/bin/start.sh
 
 RUN chmod +x /usr/local/bin/start.sh \
