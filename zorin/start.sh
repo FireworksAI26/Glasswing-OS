@@ -17,8 +17,9 @@ export WIDTH HEIGHT DEPTH DISPLAY XDG_RUNTIME_DIR HOME=/home/zorin USER=zorin
 
 install -d -o zorin -g zorin -m 0700 "$XDG_RUNTIME_DIR"
 install -d -o zorin -g zorin -m 0700 /home/zorin/.vnc
-# TigerVNC-compatible password file (DES VNC auth)
-printf '%s\n' "$VNC_PASSWORD" | vncpasswd -f > /home/zorin/.vnc/passwd
+# VncAuth password file (Ubuntu's TigerVNC ships no `vncpasswd` binary, so
+# we generate the standard DES-obfuscated file ourselves).
+python3 /usr/local/bin/vncpasswd.py "$VNC_PASSWORD" /home/zorin/.vnc/passwd
 chown zorin:zorin /home/zorin/.vnc/passwd
 chmod 0600 /home/zorin/.vnc/passwd
 printf 'zorin:%s\n' "$VNC_PASSWORD" | chpasswd
