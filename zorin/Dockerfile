@@ -21,7 +21,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg software-properties-common locales \
-        dbus dbus-x11 supervisor sudo xauth xfonts-base x11-utils \
+        dbus dbus-x11 supervisor sudo xauth xfonts-base x11-utils python3 \
         tigervnc-standalone-server tigervnc-common xrdp \
         websockify novnc \
         libgl1 libgl1-mesa-dri libglx-mesa0 mesa-utils \
@@ -118,9 +118,10 @@ RUN printf '%s\n' \
 COPY index.html /opt/zorin/www/index.html
 COPY supervisord.conf /etc/supervisor/conf.d/zorin.conf
 COPY xrdp.ini /etc/xrdp/xrdp.ini
+COPY vncpasswd.py /usr/local/bin/vncpasswd.py
 COPY start.sh /usr/local/bin/start.sh
 
-RUN chmod +x /usr/local/bin/start.sh \
+RUN chmod +x /usr/local/bin/start.sh /usr/local/bin/vncpasswd.py \
     && chown -R zorin:zorin /home/zorin /opt/zorin
 
 EXPOSE 8080 3389
