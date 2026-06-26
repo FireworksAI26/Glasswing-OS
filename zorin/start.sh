@@ -27,4 +27,13 @@ printf 'zorin:%s\n' "$VNC_PASSWORD" | chpasswd
 # system dbus (GNOME wants one); ignore if already up
 dbus-uuidgen --ensure >/dev/null 2>&1 || true
 
+# --- GNOME Shell 46 logind crash workaround --------------------------------
+# gnome-shell uses LoginManagerSystemd *iff* /run/systemd/seats exists
+# (GLib.access('/run/systemd/seats') >= 0), then opens a proxy to
+# org.freedesktop.login1 on the system bus. We run no logind, so that proxy
+# is NULL and gnome-shell segfaults (signal 11), crash-looping into the
+# "Oh no" failed-session screen. Removing the dir makes haveSystemd() false
+# so gnome-shell falls back to its supported LoginManagerDummy.
+rm -rf /run/systemd/seats /run/systemd/sessions /run/systemd/users 2>/dev/null || true
+
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/zorin.conf

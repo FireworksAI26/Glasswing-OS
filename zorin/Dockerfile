@@ -82,6 +82,9 @@ RUN printf '%s\n' \
         'export GSK_RENDERER=cairo' \
         'unset WAYLAND_DISPLAY' \
         'echo "[zorin-session] launching gnome-session at $(date)" | tee /tmp/gnome-session.log' \
+        'echo "[diag] user=$(id -un) uid=$(id -u)" | tee -a /tmp/gnome-session.log' \
+        'ls -la /run/systemd 2>&1 | sed "s/^/[diag] run-systemd: /" | tee -a /tmp/gnome-session.log' \
+        'if [ -e /run/systemd/seats ]; then echo "[diag] /run/systemd/seats EXISTS -> gnome-shell WILL use systemd login path" | tee -a /tmp/gnome-session.log; else echo "[diag] /run/systemd/seats MISSING -> gnome-shell will use dummy login (good)" | tee -a /tmp/gnome-session.log; fi' \
         'dbus-launch --exit-with-session gnome-session --session=gnome 2>&1 | tee -a /tmp/gnome-session.log' \
         > /usr/local/bin/zorin-session.sh \
     && printf '%s\n' \
