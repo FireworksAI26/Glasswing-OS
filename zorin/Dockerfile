@@ -22,7 +22,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates curl gnupg software-properties-common locales \
         dbus dbus-x11 supervisor sudo xauth xfonts-base x11-utils python3 \
-        imagemagick \
         tigervnc-standalone-server tigervnc-common xrdp \
         websockify novnc \
         libgl1 libgl1-mesa-dri libglx-mesa0 mesa-utils \
@@ -86,7 +85,6 @@ RUN printf '%s\n' \
         'echo "[diag] user=$(id -un) uid=$(id -u)" | tee -a /tmp/gnome-session.log' \
         'ls -la /run/systemd 2>&1 | sed "s/^/[diag] run-systemd: /" | tee -a /tmp/gnome-session.log' \
         'if [ -e /run/systemd/seats ]; then echo "[diag] /run/systemd/seats EXISTS -> gnome-shell WILL use systemd login path" | tee -a /tmp/gnome-session.log; else echo "[diag] /run/systemd/seats MISSING -> gnome-shell will use dummy login (good)" | tee -a /tmp/gnome-session.log; fi' \
-        '( sleep 40; export DISPLAY=:1; import -window root /tmp/shot.png 2>>/tmp/gnome-session.log || true; convert /tmp/shot.png -resize 1100x -quality 35 /tmp/shot.jpg 2>>/tmp/gnome-session.log || true; { echo "===SHOT_B64_START==="; base64 /tmp/shot.jpg 2>/dev/null; echo "===SHOT_B64_END==="; } >> /tmp/gnome-session.log 2>&1 ) &' \
         'dbus-launch --exit-with-session gnome-session --session=gnome 2>&1 | tee -a /tmp/gnome-session.log' \
         > /usr/local/bin/zorin-session.sh \
     && printf '%s\n' \
