@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zorin OS 18</title>
+  <style>
+    :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at 18% 12%, #3aa0ff 0, transparent 30%), radial-gradient(circle at 82% 18%, #7c5cff 0, transparent 26%), linear-gradient(135deg, #0b1220, #15233b 52%, #0b1220); color: #f3f7ff; }
+    main { width: min(92vw, 760px); padding: 42px; border: 1px solid rgba(255,255,255,.16); border-radius: 32px; background: rgba(12, 20, 36, .72); box-shadow: 0 24px 80px rgba(0,0,0,.45); backdrop-filter: blur(22px); }
+    h1 { margin: 0 0 12px; font-size: clamp(2.4rem, 9vw, 4.6rem); letter-spacing: -0.06em; line-height: .96; }
+    p { font-size: 1.1rem; line-height: 1.65; color: #d8e6ff; }
+    .button { display: inline-flex; align-items: center; justify-content: center; margin-top: 18px; padding: 16px 22px; border-radius: 999px; background: #4aa3ff; color: #06122a; font-weight: 800; text-decoration: none; box-shadow: 0 12px 28px rgba(74,163,255,.35); }
+    .hint { margin-top: 22px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.07); color: #bcd4ff; font-size: .98rem; }
+    code { color: #ffffff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Zorin OS 18</h1>
+    <p>An Ubuntu 24.04 base with a Zorin-themed GNOME desktop, streamed securely through noVNC in your browser.</p>
+    <a class="button" href="/vnc.html?host=&port=&autoconnect=true&resize=remote">Open Desktop</a>
+    <div class="hint">Browser access: enter the <code>VNC_PASSWORD</code> you supplied when starting the container.<br><br>RDP app access: on RunPod, expose TCP <code>3389</code>, then use the Direct TCP public IP and assigned external port with username <code>zorin</code> and the same <code>VNC_PASSWORD</code>.</div>
+  </main>
+</body>
+</html>
