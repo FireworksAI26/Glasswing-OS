@@ -1,0 +1,63 @@
+# Add this file to the repo at: .github/workflows/zorin-smoketest.yml
+# It RUNS the published image on a free GitHub runner and dumps the logs,
+# so we can debug the GNOME crash WITHOUT spending any RunPod credits.
+name: Zorin Smoketest
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build and Push Zorin OS 18 to Docker Hub"]
+    types: [completed]
+  push:
+    paths:
+      - "zorin/smoke-trigger.txt"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull image
+        run: docker pull alexandermum/zorin-os-18:latest
+
+      - name: Run container
+        run: |
+          docker run -d --name zorintest \
+            -e VNC_PASSWORD=Smoke12345 \
+            -p 8080:8080 -p 3389:3389 \
+            alexandermum/zorin-os-18:latest
+
+      - name: Wait for boot
+        run: sleep 55
+
+      - name: noVNC healthcheck
+        if: always()
+        run: |
+          if curl -fsS http://localhost:8080/ >/dev/null; then
+            echo "noVNC_HTTP=OK"
+          else
+            echo "noVNC_HTTP=FAIL"
+          fi
+
+      - name: supervisor status
+        if: always()
+        run: docker exec zorintest supervisorctl status || true
+
+      - name: running processes
+        if: always()
+        run: docker exec zorintest bash -lc 'ps -eo pid,comm | grep -Ei "gnome|mutter|Xvnc|Xtiger|xrdp|dbus|websock" || echo "none-matched"' || true
+
+      - name: GL / mesa sanity
+        if: always()
+        run: docker exec zorintest bash -lc 'DISPLAY=:1 LIBGL_ALWAYS_SOFTWARE=1 glxinfo 2>&1 | head -20 || echo "glxinfo-failed"' || true
+
+      - name: gnome-session log
+        if: always()
+        run: docker exec zorintest bash -lc 'cat /tmp/gnome-session.log 2>/dev/null || echo "no gnome-session.log"' || true
+
+      - name: container logs (tail 500)
+        if: always()
+        run: docker logs zorintest 2>&1 | tail -n 500
+
+      - name: cleanup
+        if: always()
+        run: docker rm -f zorintest || true
