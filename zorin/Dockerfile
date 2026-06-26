@@ -45,6 +45,52 @@ RUN install -d -m 0755 /etc/apt/keyrings \
     && apt-get install -y --no-install-recommends firefox \
     && rm -rf /var/lib/apt/lists/*
 
+# --- Firefox: skip first-run welcome / Terms-of-Use, no nagging -------------
+# Enterprise policy (onboarding/messaging) + AutoConfig (locks the prefs that
+# gate the "Welcome to Firefox / agree to Terms of Use" modal) so a fresh
+# profile lands straight on the page with no overlay.
+RUN set -e \
+    && FFDIR="$(dirname "$(readlink -f "$(command -v firefox)")")" \
+    && install -d /etc/firefox/policies "$FFDIR/defaults/pref" \
+    && printf '%s\n' \
+        '{' \
+        '  "policies": {' \
+        '    "OverrideFirstRunPage": "",' \
+        '    "OverridePostUpdatePage": "",' \
+        '    "DisableProfileImport": true,' \
+        '    "DontCheckDefaultBrowser": true,' \
+        '    "DisableAppUpdate": true,' \
+        '    "UserMessaging": {' \
+        '      "WhatsNew": false,' \
+        '      "ExtensionRecommendations": false,' \
+        '      "FeatureRecommendations": false,' \
+        '      "SkipOnboarding": true,' \
+        '      "MoreFromMozilla": false' \
+        '    }' \
+        '  }' \
+        '}' \
+        > /etc/firefox/policies/policies.json \
+    && printf '%s\n' \
+        'pref("general.config.filename", "firefox.cfg");' \
+        'pref("general.config.obscure_value", 0);' \
+        'pref("general.config.sandbox_enabled", false);' \
+        > "$FFDIR/defaults/pref/autoconfig.js" \
+    && printf '%s\n' \
+        '// Zorin headless Firefox config (first line is ignored by Firefox)' \
+        'defaultPref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);' \
+        'defaultPref("datareporting.policy.dataSubmissionEnabled", false);' \
+        'defaultPref("browser.aboutwelcome.enabled", false);' \
+        'defaultPref("trailhead.firstrun.didSeeAboutWelcome", true);' \
+        'defaultPref("termsofuse.acceptedVersion", 999);' \
+        'defaultPref("termsofuse.acceptedDate", 1);' \
+        'defaultPref("termsofuse.bypassNotification", true);' \
+        'defaultPref("browser.shell.checkDefaultBrowser", false);' \
+        'defaultPref("browser.startup.homepage_override.mstone", "ignore");' \
+        'defaultPref("startup.homepage_welcome_url", "");' \
+        'defaultPref("startup.homepage_welcome_url.additional", "");' \
+        'defaultPref("browser.startup.firstrunSkipsHomepage", true);' \
+        > "$FFDIR/firefox.cfg"
+
 # --- Zorin OS look: themes, icons, wallpapers, appearance app (best-effort) -
 # Failures here must NOT break the build: worst case we ship plain GNOME.
 RUN set +e; \
@@ -133,6 +179,17 @@ RUN printf '%s\n' \
     && printf '%s\n' '#!/usr/bin/env bash' 'exec /usr/local/bin/zorin-session.sh' > /home/zorin/.xsession \
     && chmod +x /home/zorin/.xsession \
     && chown zorin:zorin /home/zorin/.xsession
+
+# --- Pin Firefox to an always-visible dock/taskbar -------------------------
+# dash-to-panel gives a permanent taskbar; favorite-apps pins Firefox to it.
+# Appended to the theme applier so it runs inside the live GNOME session.
+RUN printf '%s\n' \
+        '' \
+        '# pin apps + ensure an always-visible taskbar (dash-to-panel)' \
+        'FAV='\''["firefox.desktop", "org.gnome.Nautilus.desktop", "org.gnome.Terminal.desktop"]'\''' \
+        'gsettings set org.gnome.shell favorite-apps "$FAV" 2>/dev/null || true' \
+        'gnome-extensions enable dash-to-panel@jderose9.github.com 2>/dev/null || true' \
+        >> /usr/local/bin/zorin-apply-theme.sh
 
 COPY index.html /opt/zorin/www/index.html
 COPY supervisord.conf /etc/supervisor/conf.d/zorin.conf
