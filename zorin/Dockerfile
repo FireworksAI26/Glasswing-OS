@@ -101,12 +101,30 @@ RUN set +e; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         zorin-desktop-themes zorin-icon-themes zorin-os-wallpapers zorin-appearance; \
-    apt-get install -y --no-install-recommends gnome-shell-extension-dashtopanel; \
     echo "===== /usr/share/themes ====="; ls -1 /usr/share/themes 2>/dev/null; \
     echo "===== /usr/share/icons ====="; ls -1 /usr/share/icons 2>/dev/null; \
     echo "===== backgrounds ====="; find /usr/share/backgrounds -maxdepth 3 -type f 2>/dev/null | head -60; \
     rm -rf /var/lib/apt/lists/*; \
     true
+
+# --- Always-visible dock: dash-to-dock -------------------------------------
+# The Ubuntu/Zorin repos have NO installable dash-to-panel/dash-to-dock package
+# (apt candidate = none), so we vendor the official prebuilt extension release.
+# v105 ships precompiled schemas and supports GNOME Shell 45-50 (this image=46),
+# so there is no version-validation mismatch. This RUN is NOT best-effort: a
+# broken download should fail the build rather than ship a dock-less image.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends curl ca-certificates unzip; \
+    D2D="/usr/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com"; \
+    mkdir -p "$D2D"; \
+    curl -fL --retry 3 -o /tmp/d2d.zip \
+        "https://github.com/micheleg/dash-to-dock/releases/download/extensions.gnome.org-v105/dash-to-dock@micxgx.gmail.com.zip"; \
+    unzip -o /tmp/d2d.zip -d "$D2D"; \
+    glib-compile-schemas "$D2D/schemas" 2>/dev/null || true; \
+    test -f "$D2D/metadata.json"; \
+    rm -f /tmp/d2d.zip; \
+    rm -rf /var/lib/apt/lists/*
 
 # --- User, novnc web assets -------------------------------------------------
 RUN (userdel -r ubuntu 2>/dev/null || true) \
@@ -166,7 +184,7 @@ RUN printf '%s\n' \
         '[ -n "$WALL" ]  && gsettings set org.gnome.desktop.background picture-uri "file://$WALL"' \
         '[ -n "$WALL" ]  && gsettings set org.gnome.desktop.background picture-uri-dark "file://$WALL"' \
         'gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true' \
-        'gnome-extensions enable dash-to-panel@jderose9.github.com 2>/dev/null || true' \
+        'gnome-extensions enable dash-to-dock@micxgx.gmail.com 2>/dev/null || true' \
         'true' \
         > /usr/local/bin/zorin-apply-theme.sh \
     && chmod +x /usr/local/bin/zorin-session.sh /usr/local/bin/zorin-apply-theme.sh \
@@ -184,21 +202,26 @@ RUN printf '%s\n' \
     && chown zorin:zorin /home/zorin/.xsession
 
 # --- Pin Firefox to an always-visible dock/taskbar -------------------------
-# dash-to-panel gives a permanent taskbar; favorite-apps pins Firefox to it.
+# dash-to-dock gives a permanent dock; favorite-apps pins Firefox to it.
 # Appended to the theme applier so it runs inside the live GNOME session.
 RUN printf '%s\n' \
         '' \
-        '# pin apps + ensure an always-visible taskbar (dash-to-panel)' \
+        '# pin apps + ensure an always-visible dock (dash-to-dock)' \
         'FAV='\''["firefox.desktop", "org.gnome.Nautilus.desktop", "org.gnome.Terminal.desktop"]'\''' \
         'gsettings set org.gnome.shell favorite-apps "$FAV" 2>/dev/null || true' \
-        'DTP="dash-to-panel@jderose9.github.com"' \
-        '# GNOME 46 rejects the noble-packaged extension on version mismatch unless' \
-        '# validation is disabled; also seed enabled-extensions so the shell loads it.' \
+        'DTP="dash-to-dock@micxgx.gmail.com"' \
+        '# disable version validation + seed enabled-extensions so the shell loads it.' \
         'gsettings set org.gnome.shell disable-extension-version-validation true 2>/dev/null || true' \
         'gsettings set org.gnome.shell disable-user-extensions false 2>/dev/null || true' \
         'CUR=$(gsettings get org.gnome.shell enabled-extensions 2>/dev/null)' \
         'case "$CUR" in *"$DTP"*) : ;; *) gsettings set org.gnome.shell enabled-extensions "['\''$DTP'\'']" 2>/dev/null || true ;; esac' \
         'gnome-extensions enable "$DTP" 2>/dev/null || true' \
+        '# force the dock to stay fixed/visible (no autohide) and dock at bottom' \
+        'dconf write /org/gnome/shell/extensions/dash-to-dock/dock-fixed true 2>/dev/null || true' \
+        'dconf write /org/gnome/shell/extensions/dash-to-dock/intellihide false 2>/dev/null || true' \
+        'dconf write /org/gnome/shell/extensions/dash-to-dock/autohide false 2>/dev/null || true' \
+        'dconf write /org/gnome/shell/extensions/dash-to-dock/dock-position "'\''BOTTOM'\''" 2>/dev/null || true' \
+        'dconf write /org/gnome/shell/extensions/dash-to-dock/show-show-apps-button true 2>/dev/null || true' \
         >> /usr/local/bin/zorin-apply-theme.sh
 
 COPY index.html /opt/zorin/www/index.html
